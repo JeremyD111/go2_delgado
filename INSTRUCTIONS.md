@@ -56,7 +56,7 @@ ros2 launch go2_planner planner.launch.py
 
 EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de clic en cualquier lugar del mapa para que se genere automaticamente una trayectoria.
 
-
+![Generacion de trayectoria](img/Trayectoria.png)
 
 ## 3. Estructura del Sistema (Node Graph)
 Abra una tercera terminal y ejecute:
