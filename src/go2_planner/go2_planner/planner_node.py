@@ -10,7 +10,7 @@ class DijkstraPlanner(Node):
     def __init__(self):
         super().__init__('dijkstra_planner')
         
-        # Configuración de QoS para el Mapa (Crucial en ROS 2)
+        # Configuración de QoS para el Mapa
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
