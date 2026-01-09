@@ -7,29 +7,31 @@ Para replicar este entorno, se requiere:
 - Sistema Operativo: Ubuntu 22.04 LTS.
 - Middleware: ROS 2 Humble.
 - Simulador: Gazebo Classic.
-- Paquetes ROS 2: * nav2_map_server y nav2_lifecycle_manager (Gestión de mapas).
+- Paquetes ROS 2: `nav2_map_server` y `nav2_lifecycle_manager` (Gestión de mapas).
 - tf2_ros (Transformaciones de marcos de referencia).
 - champ_bringup y champ_gazebo (Controladores del cuadrúpedo).
 - Librerías Python: numpy (Cálculos de matriz de costo).
 
 ## 2. Instalación y Compilación
 
-# Instalar dependencias del sistema
+### Instalar dependencias del sistema
+```bash
 rosdep install -i --from-path . --rosdistro humble -y
+```
 
-# Clonar el repositorio:
+### Clonar el repositorio:
 ```bash
 git clone https://github.com/JeremyD111/go2_delgado
 ```
 
-# Compilación de los paquetes del proyecto
+### Compilación de los paquetes del proyecto
 ```bash
 cd ~/go2_delgado
 colcon build --packages-select go2_description go2_config go2_planner
 source install/setup.bash
 ```
 
-## Ejecución de la simulacion 
+### Ejecución de la simulacion 
 
 Siga este orden en terminales independientes:
 
