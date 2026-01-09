@@ -54,17 +54,22 @@ ros2 launch go2_planner planner.launch.py
 ```
 ## Generacion de trayectorias
 
+EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de clic en cualquier lugar del mapa para que se genere automaticamente una trayectoria.
 
 
 
-## Estructura del Sistema (Node Graph)
+## 3. Estructura del Sistema (Node Graph)
+Abra una tercera terminal y ejecute:
 
+```bash
+cd ~/go2_delgado
+source install/setup.bash
+ros2 run rqt_graph rqt_graph
+```
+![Grafo de Nodos ROS 2](img/node_graph.png)
 
+## 4. Descripción de Launch Files
 
+- **gazebo_velodyne.launch.py:** Configura la física en Gazebo, los sensores LiDAR y la cinemática de CHAMP para el Unitree Go2. 
 
-
-## 5. Descripción de Launch Files
-
-    gazebo_velodyne.launch.py: Configura la física en Gazebo, los sensores LiDAR y la cinemática de CHAMP para el Unitree Go2. (2 líneas)
-
-    planner.launch.py: Gestiona el ciclo de vida del mapa, la transformación estática map->odom y el nodo de planificación Dijkstra. (2 líneas)
+- **planner.launch.py:** Gestiona el ciclo de vida del mapa, la transformación estática map->odom y el nodo de planificación Dijkstra.
