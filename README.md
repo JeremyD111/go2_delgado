@@ -1,3 +1,112 @@
+# Unitree Go2: SLAM y Planificador global de trayectorias (Dijkstra)
+
+- **Mapa:** Small_house
+![mapa small house](img/small_house.jpg)
+- **Planificador globar de trayectoria:** Dijkstra
+- **Repositorio de referencia:** [https://github.com/widegonz/unitree-go2-ros2](https://github.com/widegonz/unitree-go2-ros2)
+
+# 1. Dependencias para ROS
+
+```bash
+sudo apt install ros-humble-gazebo-ros2-control
+sudo apt install ros-humble-xacro
+sudo apt install ros-humble-robot-localization
+sudo apt install ros-humble-ros2-controllers
+sudo apt install ros-humble-ros2-control
+sudo apt install ros-humble-velodyne
+sudo apt install ros-humble-velodyne-gazebo-plugins
+sudo apt-get install ros-humble-velodyne-description
+sudo apt install -y python3-rosdep
+rosdep update
+```
+
+# 2. Guía de Instalación y Compilación
+
+## 2.0 Clonar el repositorio:
+```bash
+git clone https://github.com/JeremyD111/go2_delgado
+```
+
+## 2.1 Compilación de los paquetes del proyecto
+```bash
+cd ~/go2_delgado
+colcon build --packages-select go2_description go2_config go2_planner
+source install/setup.bash
+```
+
+# 2. Mapeo del entorno (SLAM)
+## 2.0 Abrir el mapa
+
+```bash
+ros2 launch go2_config gazebo_velodyne.launch.py world:=small_house
+```
+
+## 2.1 Ejecutar SLAM_Toolbox Package
+
+```bash
+ros2 launch go2_config slam.launch.py use_sim_time:=true
+```
+
+## 2.2 Nodo de teleoperacion
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Guía de Instalación, Compilación y Ejecución
 
 ## 1. Dependencias del Proyecto
