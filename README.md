@@ -63,10 +63,12 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 Con ayuda del teclado empezaremos a mover el robot para mapear toda la zona del mapa small_house.
 
 <div align="center">
-  <video src="https://raw.githubusercontent.com/JeremyD111/go2_delgado/img/tu_video_slam.mp4" width="400px" controls>
-  </video>
+  <video src="https://github.com/user-attachments/assets/d6383d34-b497-40fe-b45e-badf5860b23f" width="400px" controls></video>
   <p><i>Video 1: Demostración del proceso de mapeo (SLAM)</i></p>
 </div>
+
+
+
 
 
 
