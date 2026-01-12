@@ -1,9 +1,9 @@
 # Unitree Go2: SLAM y Planificador global de trayectorias (Dijkstra)
 
-- **Mapa:** Small_house
-![mapa small house](img/small_house.jpg)
 - **Planificador globar de trayectoria:** Dijkstra
 - **Repositorio de referencia:** [https://github.com/widegonz/unitree-go2-ros2](https://github.com/widegonz/unitree-go2-ros2)
+- **Mapa:** Small_house
+![mapa small house](img/small_house.jpg)
 
 # 1. Dependencias para ROS
 
@@ -21,7 +21,6 @@ rosdep update
 ```
 
 # 2. Guía de Instalación y Compilación
-
 ## 2.0 Clonar el repositorio:
 ```bash
 git clone https://github.com/JeremyD111/go2_delgado
@@ -34,25 +33,41 @@ colcon build --packages-select go2_description go2_config go2_planner
 source install/setup.bash
 ```
 
-# 2. Mapeo del entorno (SLAM)
-## 2.0 Abrir el mapa
+
+# 3. Mapeo del entorno (SLAM)
+## 3.0 Abrir el mapa
 
 ```bash
+cd ~/go2_delgado
 ros2 launch go2_config gazebo_velodyne.launch.py world:=small_house
 ```
 
-## 2.1 Ejecutar SLAM_Toolbox Package
+## 3.1 Ejecutar SLAM_Toolbox Package
 
 ```bash
+cd ~/go2_delgado
 ros2 launch go2_config slam.launch.py use_sim_time:=true
 ```
 
-## 2.2 Nodo de teleoperacion
+- Se abrirá Rviz tal como se muestra a continuación:
+![slam1](img/slam1.png)
+
+## 3.2 Nodo de teleoperacion
 
 ```bash
+cd ~/go2_delgado
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
+## 3.3 Mapeo 
+Con ayuda del teclado empezaremos a mover el robot para mapear toda la zona del mapa small_house.
+
+<div align="center">
+  <video src="img/demostracion_slam.mp4" width="400px" controls>
+    Tu navegador no soporta videos.
+  </video>
+  <p><i>Video 1: Demostración del proceso de mapeo (SLAM)</i></p>
+</div>
 
 
 
