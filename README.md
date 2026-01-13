@@ -351,7 +351,7 @@ EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de cli
 </div>
 
 
-## 5.2 Estructura del Sistema (Node Graph)
+## 5.2 Estructura de comunicacion de nodos (Node Graph)
 Abra una tercera terminal y ejecute:
 
 ```bash
@@ -360,6 +360,29 @@ source install/setup.bash
 ros2 run rqt_graph rqt_graph
 ```
 ![Grafo de Nodos ROS 2](img/node_graph.png)
+
+## 5.3 Estructura del paquete de ROS
+```bash
+├── go2_planner
+│   ├── __init__.py
+│   └── planner_node.py
+├── launch
+│   └── planner.launch.py
+├── maps
+│   ├── map.pgm
+│   └── map.yaml
+├── package.xml
+├── resource
+│   └── go2_planner
+├── rviz
+│   └── planner.rviz
+├── setup.cfg
+├── setup.py
+└── test
+    ├── test_copyright.py
+    ├── test_flake8.py
+    └── test_pep257.py
+```
 
 # 6. Descripción de Launch Files
 
