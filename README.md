@@ -63,7 +63,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 Con ayuda del teclado empezaremos a mover el robot para mapear toda la zona del mapa small_house.
 
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/d6383d34-b497-40fe-b45e-badf5860b23f" width="400px" controls></video>
+  <video src="https://github.com/user-attachments/assets/d6383d34-b497-40fe-b45e-badf5860b23f" width="600px" controls></video>
   <p><i>Video 1: Demostración del proceso de mapeo (SLAM)</i></p>
 </div>
 
@@ -343,11 +343,8 @@ ros2 launch go2_planner planner.launch.py
 EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de clic en cualquier lugar del mapa para que se genere automaticamente una trayectoria.
 
 ![Generacion de trayectoria](img/Trayectoria.png)
-<div align="center">
-  <video src="https://github.com/user-attachments/assets/4abd9592-73cc-4611-b0f6-df1ba7dae628
-" width="500px" controls></video>
-  <p><i>Video 2: Ejecución del algoritmo de Dijkstra y navegación del Unitree Go2</i></p>
-</div>
+
+
 
 
 ## 5.2 Estructura del Sistema (Node Graph)
