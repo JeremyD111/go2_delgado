@@ -347,7 +347,7 @@ EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de cli
 <div align="center">
   <video src="https://github.com/user-attachments/assets/bfa73f40-68c1-40c6-a760-94608ed7b121
 " width="500px" controls></video>
-  <p><i>Video 2: Ejecución del algoritmo de Dijkstra y navegación del Unitree Go2</i></p>
+  <p><i>Video 2: Ejecución del algoritmo de Dijkstra </i></p>
 </div>
 
 
