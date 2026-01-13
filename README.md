@@ -79,7 +79,7 @@ Se crearan dos archivos llamados:
 - map.pgm
 - map.yaml
 
-![slam](map.pgm)
+![slam](img/map_slam.png)
 
 
 
