@@ -5,6 +5,8 @@ from geometry_msgs.msg import PoseStamped
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 import numpy as np
 import heapq
+import csv
+import os
 
 class DijkstraPlanner(Node):
     def __init__(self):
@@ -119,9 +121,11 @@ class DijkstraPlanner(Node):
 
         if path_indices:
             self.publish_path(path_indices)
+            self.save_waypoints_to_csv(path_indices)
             self.get_logger().info("¡Ruta encontrada y publicada!")
         else:
             self.get_logger().error("No se pudo encontrar una ruta válida.")
+            
 
     def publish_path(self, path_indices):
         """ Convierte los índices en un mensaje nav_msgs/Path """
@@ -137,6 +141,20 @@ class DijkstraPlanner(Node):
             path_msg.poses.append(pose)
 
         self.path_pub.publish(path_msg)
+        
+    def save_waypoints_to_csv(self, path_indices):
+        """ Guarda los waypoints en un archivo CSV para evidencia """
+        file_path = os.path.expanduser('~/go2_delgado/waypoints_dijkstra.csv')
+        try:
+            with open(file_path, mode='w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['x', 'y'])  # Encabezado
+                for ix, iy in path_indices:
+                    wx, wy = self.map_to_world(ix, iy)
+                    writer.writerow([wx, wy])
+            self.get_logger().info(f"Archivo de waypoints generado en: {file_path}")
+        except Exception as e:
+            self.get_logger().error(f"Error al guardar el CSV: {str(e)}")
 
 def main(args=None):
     rclpy.init(args=args)
