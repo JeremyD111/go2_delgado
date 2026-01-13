@@ -67,8 +67,19 @@ Con ayuda del teclado empezaremos a mover el robot para mapear toda la zona del 
   <p><i>Video 1: Demostración del proceso de mapeo (SLAM)</i></p>
 </div>
 
+## 3.4 Guardar el mapa
+Guarda el mapa haciendo uso del siguiente comando:
 
+```bash
+ros2 run nav2_map_server map_saver_cli -f ~/map
+```
 
+## 3.5 Resultado
+Se crearan dos archivos llamados:
+- map.pgm
+- map.yaml
+
+![slam](map.pgm)
 
 
 
