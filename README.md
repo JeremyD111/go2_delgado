@@ -343,6 +343,11 @@ ros2 launch go2_planner planner.launch.py
 EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de clic en cualquier lugar del mapa para que se genere automaticamente una trayectoria.
 
 ![Generacion de trayectoria](img/Trayectoria.png)
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/4abd9592-73cc-4611-b0f6-df1ba7dae628
+" width="500px" controls></video>
+  <p><i>Video 2: Ejecución del algoritmo de Dijkstra y navegación del Unitree Go2</i></p>
+</div>
 
 
 ## 5.2 Estructura del Sistema (Node Graph)
