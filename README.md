@@ -87,12 +87,12 @@ El algoritmo de Dijkstra es un método de búsqueda en grafos que garantiza enco
 
 ## 4.1 Entradas y salidas 
 ***Entradas (Subscribers):***
-- `/map``(nav_msgs/OccupancyGrid)`: Provee la información de la rejilla de ocupación y obstáculos del entorno.
+- `/map` `(nav_msgs/OccupancyGrid)`: Provee la información de la rejilla de ocupación y obstáculos del entorno.
 - `/odom` `(nav_msgs/Odometry)`: Proporciona la posición y orientación actual del robot en tiempo real.
 - `/goal_pose` `(geometry_msgs/PoseStamped)`: Recibe la coordenada de destino seleccionada manualmente por el usuario en RViz.
 
 ***Salidas (Publishers):***
-- `/goal_pose` `(geometry_msgs/PoseStamped)`: Recibe la coordenada de destino seleccionada manualmente por el usuario en RViz.
+- `/goal_pose` `(nav_msgs/Path)`: Envía la secuencia de waypoints óptima calculada por el algoritmo para ser visualizada en RViz.
 
 ## 4.2 Explicacion de algoritmo 
 
@@ -296,7 +296,22 @@ def goal_callback(self, msg):
 
 - ***Salida:*** Publica la trayectoria procesada en el tópico `/global_path` para su renderizado en RViz.
 
+```bash
+def publish_path(self, path_indices):
+        """ Convierte los índices en un mensaje nav_msgs/Path """
+        path_msg = Path()
+        path_msg.header.frame_id = "map"
+        path_msg.header.stamp = self.get_clock().now().to_msg()
 
+        for ix, iy in path_indices:
+            pose = PoseStamped()
+            wx, wy = self.map_to_world(ix, iy)
+            pose.pose.position.x = wx
+            pose.pose.position.y = wy
+            path_msg.poses.append(pose)
+
+        self.path_pub.publish(path_msg)
+```
 
 # 5. Guía de Ejecución de la simulacion 
 
