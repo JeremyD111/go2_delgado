@@ -1,9 +1,10 @@
-# PARTE #1: Unitree Go2 - SLAM y Planificador global de trayectorias (Dijkstra)
-
+# PROYECTO UNITREE GO2 (DIJKSTRA + PID)
 - **Planificador globar de trayectoria:** Dijkstra
+- **Controlador:** PID
 - **Repositorio de referencia:** [https://github.com/widegonz/unitree-go2-ros2](https://github.com/widegonz/unitree-go2-ros2)
 - **Mapa:** Small_house
 ![mapa small house](img/small_house.jpg)
+![slam](img/map_slam.png)
 
 ## Estructura del paquete de ROS
 ```bash
@@ -60,15 +61,18 @@ source install/setup.bash
 ## Ejecutar simulacion final:
 Una vez realizado los pasos anteriores puede saltarse a la parte 2 del proyecto para ejecutar la simulacion final que ya incluye DIJKSTRA Y PID [Ir a Parte#2](#compilacion-y-ejecucion-de-la-simulacion)
 
-# 3. Mapeo del entorno (SLAM)
-## 3.0 Abrir el mapa
+
+
+# PARTE #1: Unitree Go2 - SLAM y Planificador global de trayectorias (Dijkstra)
+# 1. Mapeo del entorno (SLAM)
+## 1.0 Abrir el mapa
 
 ```bash
 cd ~/go2_delgado
 ros2 launch go2_config gazebo_velodyne.launch.py world:=small_house
 ```
 
-## 3.1 Ejecutar SLAM_Toolbox Package
+## 1.1 Ejecutar SLAM_Toolbox Package
 
 ```bash
 cd ~/go2_delgado
@@ -78,14 +82,14 @@ ros2 launch go2_config slam.launch.py use_sim_time:=true
 - Se abrirá Rviz tal como se muestra a continuación:
 ![slam1](img/slam1.png)
 
-## 3.2 Nodo de teleoperacion
+## 1.2 Nodo de teleoperacion
 
 ```bash
 cd ~/go2_delgado
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-## 3.3 Mapeo 
+## 1.3 Mapeo 
 Con ayuda del teclado empezaremos a mover el robot para mapear toda la zona del mapa small_house.
 
 <div align="center">
@@ -93,14 +97,14 @@ Con ayuda del teclado empezaremos a mover el robot para mapear toda la zona del 
   <p><i>Video 1: Demostración del proceso de mapeo (SLAM)</i></p>
 </div>
 
-## 3.4 Guardar el mapa
+## 1.4 Guardar el mapa
 Guarda el mapa haciendo uso del siguiente comando:
 
 ```bash
 ros2 run nav2_map_server map_saver_cli -f ~/map
 ```
 
-## 3.5 Resultados
+## 1.5 Resultados
 Se crearan dos archivos llamados:
 - map.pgm
 - map.yaml
@@ -108,10 +112,10 @@ Se crearan dos archivos llamados:
 ![slam](img/map_slam.png)
 
 
-# 4. Planificación global de trayectoria - Dijkstra
+# 2. Planificación global de trayectoria - Dijkstra
 El algoritmo de Dijkstra es un método de búsqueda en grafos que garantiza encontrar la ruta de menor costo entre un punto de inicio y un objetivo. Funciona mediante una exploración expansiva que prioriza siempre los nodos con el menor costo acumulado. 
 
-## 4.1 Entradas y salidas 
+## 2.1 Entradas y salidas 
 ***Entradas (Subscribers):***
 - `/map` `(nav_msgs/OccupancyGrid)`: Provee la información de la rejilla de ocupación y obstáculos del entorno.
 - `/odom` `(nav_msgs/Odometry)`: Proporciona la posición y orientación actual del robot en tiempo real.
@@ -120,9 +124,9 @@ El algoritmo de Dijkstra es un método de búsqueda en grafos que garantiza enco
 ***Salidas (Publishers):***
 - `/goal_pose` `(nav_msgs/Path)`: Envía la secuencia de waypoints óptima calculada por el algoritmo para ser visualizada en RViz.
 
-## 4.2 Explicacion de algoritmo 
+## 2.2 Explicacion de algoritmo 
 
-### 4.2.1 Función de Inicialización (`__init__`):
+### 2.2.1 Función de Inicialización (`__init__`):
 Esta función se encarga de configurar la infraestructura de comunicación y el estado inicial del nodo:
 
 - ***Configuración de QoS:*** Define un perfil de Calidad de Servicio TRANSIENT_LOCAL para asegurar la recepción del mapa, incluso si fue publicado antes de iniciar el planificador.
@@ -162,7 +166,7 @@ def __init__(self):
         self.height = 0
 ```
 
-### 4.2.2 Gestión de Datos del Mapa (`map_callback`):
+### 2.2.2 Gestión de Datos del Mapa (`map_callback`):
 Esta función procesa el mensaje de tipo OccupancyGrid para construir el espacio de búsqueda digital:
 
 - ***Extracción de Metadatos:*** Almacena la resolución (metros/píxel) y el punto de origen del mapa, valores críticos para realizar transformaciones de coordenadas exactas.
@@ -183,7 +187,7 @@ def map_callback(self, msg):
         self.get_logger().info("Mapa recibido correctamente")
 ```
 
-### 4.2.3 Actualización de Posición (`odom_callback`):
+### 2.2.3 Actualización de Posición (`odom_callback`):
 - ***Extracción de Coordenadas:*** Filtra el mensaje de tipo Odometry para obtener exclusivamente la posición cartesiana (x,y) referenciada en metros.
 
 - ***Definición del Punto de Inicio:*** Mantiene actualizada la variable current_pose, la cual es indispensable para determinar el nodo de origen (start node) al momento de iniciar la búsqueda del camino más corto.
@@ -194,7 +198,7 @@ def map_callback(self, msg):
         self.current_pose = [msg.pose.pose.position.x, msg.pose.pose.position.y]
 ```
 
-### 4.2.4 Transformación de Coordenadas (`world_to_map` y `map_to_world`)
+### 2.2.4 Transformación de Coordenadas (`world_to_map` y `map_to_world`)
 - ***world_to_map:*** Transforma coordenadas métricas del mundo real en índices discretos de la matriz del mapa (píxeles), restando el origen y dividiendo por la resolución
 
 ```bash
@@ -215,7 +219,7 @@ def map_to_world(self, ix, iy):
         return wx, wy
 ```
 
-### 4.2.5 Generación de Vecinos (`get_neighbors`)
+### 2.2.5 Generación de Vecinos (`get_neighbors`)
 - ***8-Conectividad:*** Evalúa las celdas vecinas en todas las direcciones (arriba, abajo, lados y las cuatro diagonales), permitiendo una planificación de trayectoria más natural y fluida.
 
 - ***Validación de Límites:*** Verifica que las coordenadas generadas se encuentren dentro de las dimensiones reales de la matriz de ocupación para evitar errores de desbordamiento de índices.
@@ -241,7 +245,7 @@ def get_neighbors(self, node):
         return neighbors
 ```
 
-### 4.2.6 Algoritmo Central (`run_dijkstra`)
+### 2.2.6 Algoritmo Central (`run_dijkstra`)
 - ***Priorización:*** Utiliza una cola de prioridad para explorar siempre la celda con el menor costo acumulado.
 
 - ***Optimización:*** Registra en `cost_so_far` el costo mínimo por celda, actualizándolo si encuentra una ruta más corta.
@@ -283,7 +287,7 @@ def run_dijkstra(self, start, goal):
         return path[::-1] # Invertir para que vaya de start a goal
 ```
 
-### 4.2.7 Activación del Planificador (`goal_callback`)
+### 2.2.7 Activación del Planificador (`goal_callback`)
 - ***Validación:*** Verifica la disponibilidad del mapa y la pose del robot antes de procesar cualquier solicitud.
 
 - ***Preprocesamiento:*** Convierte las coordenadas métricas (inicio y meta) a índices de rejilla mediante `world_to_map`.
@@ -313,7 +317,7 @@ def goal_callback(self, msg):
             self.get_logger().error("No se pudo encontrar una ruta válida.")
 ```
 
-### 4.2.8 Publicación de Trayectoria (`publish_path`)
+### 2.2.8 Publicación de Trayectoria (`publish_path`)
 - ***Conversión:*** Traduce los índices de la rejilla a coordenadas métricas (x,y) mediante la función `map_to_world`.
 
 - ***Construcción:*** Genera un mensaje `nav_msgs/Path` compuesto por una lista secuencial de poses (`PoseStamped`).
@@ -339,7 +343,7 @@ def publish_path(self, path_indices):
         self.path_pub.publish(path_msg)
 ```
 
-# 5. Guía de Ejecución de la simulacion 
+# 3. Guía de Ejecución de la simulacion 
 
 Siga este orden en terminales independientes:
 
@@ -364,7 +368,7 @@ ros2 launch go2_planner planner.launch.py
 ```
 ![go2_rviz](img/go2_rviz.png)
 
-## 5.1 Generacion de trayectorias
+## 3.1 Generacion de trayectorias
 
 EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de clic en cualquier lugar del mapa para que se genere automaticamente una trayectoria.
 
@@ -377,7 +381,7 @@ EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de cli
 </div>
 
 
-## 5.2 Estructura de comunicacion de nodos (Node Graph)
+## 3.2 Estructura de comunicacion de nodos (Node Graph)
 Abra una tercera terminal y ejecute:
 
 ```bash
@@ -388,7 +392,7 @@ ros2 run rqt_graph rqt_graph
 ![Grafo de Nodos ROS 2](img/node_graph.png)
 
 
-# 6. Video de youtube
+# 4. Video de youtube
 [https://www.youtube.com/watch?v=PY8p1WlFl1I ](https://www.youtube.com/watch?v=PY8p1WlFl1I )
 
 
