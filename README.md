@@ -1,9 +1,33 @@
-# Unitree Go2: SLAM y Planificador global de trayectorias (Dijkstra)
+# PARTE #1: Unitree Go2 - SLAM y Planificador global de trayectorias (Dijkstra)
 
 - **Planificador globar de trayectoria:** Dijkstra
 - **Repositorio de referencia:** [https://github.com/widegonz/unitree-go2-ros2](https://github.com/widegonz/unitree-go2-ros2)
 - **Mapa:** Small_house
 ![mapa small house](img/small_house.jpg)
+
+## Estructura del paquete de ROS
+```bash
+├── go2_planner
+│   ├── __init__.py
+│   ├── pid_controller_node.py
+│   └── planner_node.py
+├── launch
+│   └── planner.launch.py
+├── maps
+│   ├── map.pgm
+│   └── map.yaml
+├── package.xml
+├── resource
+│   └── go2_planner
+├── rviz
+│   └── planner.rviz
+├── setup.cfg
+├── setup.py
+└── test
+    ├── test_copyright.py
+    ├── test_flake8.py
+    └── test_pep257.py
+```
 
 # 1. Dependencias para ROS
 
@@ -22,6 +46,7 @@ rosdep update
 
 # 2. Guía de Instalación y Compilación
 ## 2.0 Clonar el repositorio:
+En su carpeta HOME clonar el repositorio:
 ```bash
 git clone https://github.com/JeremyD111/go2_delgado
 ```
@@ -29,10 +54,11 @@ git clone https://github.com/JeremyD111/go2_delgado
 ## 2.1 Compilación de los paquetes del proyecto
 ```bash
 cd ~/go2_delgado
-colcon build --packages-select go2_description go2_config go2_planner
+colcon build 
 source install/setup.bash
 ```
-
+## Ejecutar simulacion final:
+Una vez realizado los pasos anteriores puede saltarse a la parte 2 del proyecto para ejecutar la simulacion final que ya incluye DIJKSTRA Y PID [Ir a Parte#2](#compilacion-y-ejecucion-de-la-simulacion)
 
 # 3. Mapeo del entorno (SLAM)
 ## 3.0 Abrir el mapa
@@ -361,30 +387,342 @@ ros2 run rqt_graph rqt_graph
 ```
 ![Grafo de Nodos ROS 2](img/node_graph.png)
 
-## 5.3 Estructura del paquete de ROS
+
+# 6. Video de youtube
+[https://www.youtube.com/watch?v=PY8p1WlFl1I ](https://www.youtube.com/watch?v=PY8p1WlFl1I )
+
+
+
+
+
+
+
+
+
+# PARTE #2: Seguimiento de Trayectoria - Controlador PID 
+
+Esta sección describe la implementación del controlador local encargado de seguir la ruta generada por el algoritmo de Dijkstra.
+
+# Explicacion del algoritmo de control PID
+## 1. Entradas y Salidas:
+**Entradas (Subscribers)**
+- `/global_path (nav_msgs/Path)`: La ruta óptima generada por el planificador Dijkstra.
+- `/odom (nav_msgs/Odometry)`: Retroalimentación de la posición y velocidad actual del robot.
+
+**Salidas (Publishers)**
+- `/cmd_vel` (`geometry_msgs/Twist`): Comandos de velocidad enviados a la cinemática del robot.
+
 ```bash
-├── go2_planner
-│   ├── __init__.py
-│   └── planner_node.py
-├── launch
-│   └── planner.launch.py
-├── maps
-│   ├── map.pgm
-│   └── map.yaml
-├── package.xml
-├── resource
-│   └── go2_planner
-├── rviz
-│   └── planner.rviz
-├── setup.cfg
-├── setup.py
-└── test
-    ├── test_copyright.py
-    ├── test_flake8.py
-    └── test_pep257.py
+class PIDControllerNode(Node):
+    def __init__(self):
+        super().__init__('pid_controller_node')
+
+        # --- Comunicaciones ---
+        self.path_sub = self.create_subscription(Path, '/global_path', self.path_callback, 10)
+        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+
 ```
 
-# 6. Descripción de Launch Files
+## 2. Configuración y Parámetros del Controlador
+**Parámetros de Sintonización (Gains)**
+- `kp_w (2.0)`: Ganancia Proporcional. Define la agresividad del giro.
+
+- `ki_w (0.0021)`: Ganancia Integral. Elimina el error en estado estacionario.
+
+- `kd_w (0.13)`: Ganancia Derivativa. Actúa como un amortiguador (evita zigzag).
+
+**Límites Dinámicos y Seguridad**
+- `v_nominal (0.55 m/s)`: Velocidad crucero definida para un entorno de interiores.
+
+- `max_w (1.0 rad/s)`: Velocidad angular máxima. 
+
+- `accel_limit (0.04)`: Es el parámetro de suavizado. Limita cuánto puede cambiar la velocidad en cada ciclo (50ms). 
+
+**Variables de Estado del Lazo de Control**
+- `target_idx`: El puntero que rastrea en qué waypoint de la ruta de Dijkstra nos encontramos.
+
+- `prev_error_w`: Almacena el error del ciclo anterior para calcular la derivada (de/dt).
+
+- `integral_w`: Acumula el error histórico para la componente integral.
+
+- `current_v`: Realiza el seguimiento de la velocidad actual para aplicar la rampa de aceleración de forma incremental.
+```bash
+# --- Parámetros de Control (Tuning) ---
+        self.kp_w, self.ki_w, self.kd_w = 2.0, 0.0021, 0.13
+        self.v_nominal = 0.55   
+        self.max_w = 1.0       
+        self.accel_limit = 0.04 
+        
+        # --- Estado del Robot ---
+        self.path = []
+        self.current_pose = None   
+        self.target_idx = 0
+        self.prev_error_w = 0.0
+        self.integral_w = 0.0
+        self.current_v = 0.0       
+
+        # --- Variables de Telemetría ---
+        self.total_distance = 0.0
+        self.last_odom_pos = None  
+        self.start_time = None
+        self.is_active = False
+        self.telemetry_tick = 0 # Para limitar la frecuencia de impresión
+
+        # Timer principal (20Hz)
+        self.timer = self.create_timer(0.05, self.control_loop)
+
+        self.get_logger().info('*** SISTEMA GO2 LISTO - ESPERANDO RUTA GLOBAL ***')
+```
+
+## 3. Gestion de la Ruta (`path_callback`)
+
+- `integral_w = 0.0`: Elimina cualquier acumulación de error de giros anteriores. 
+
+- `prev_error_w = 0.0`: Limpia la memoria del término derivativo.
+
+- Al configurar `is_active = True`, el nodo permite que el `control_loop` empiece a publicar comandos en el tópico `/cmd_vel`.
+
+- Se inicializa el índice de seguimiento (`target_idx = 0`) para garantizar que el Go2 siempre se dirija al primer punto de la nueva trayectoria, sin importar su posición previa.
+
+```bash
+def path_callback(self, msg):
+        if not msg.poses: return
+        self.path = [(p.pose.position.x, p.pose.position.y) for p in msg.poses]
+        self.target_idx = 0
+        self.integral_w = 0.0
+        self.prev_error_w = 0.0
+        self.total_distance = 0.0
+        self.start_time = self.get_clock().now()
+        self.is_active = True
+        self.get_logger().info(f'RUTA RECIBIDA: Iniciando seguimiento de {len(self.path)} puntos...')
+
+```
+
+## 4. Procesamiento de Odometría (`odom_callback`)
+- **Conversión de Orientación:** Transforma la orientación del robot de Cuaterniones (formato original de ROS 2) a Ángulo Yaw (Euler) usando atan2.
+
+- **Actualización de Pose:** Almacena continuamente la posición (x,y) y rotación actual en self.current_pose, sirviendo como la retroalimentación (feedback) en tiempo real para el lazo de control.
+
+- **Cálculo de Distancia Acumulada:** Integra el desplazamiento del robot sumando la distancia euclidiana entre la posición actual y la anterior (last_odom_pos) únicamente cuando el seguimiento de ruta está activo.
+
+- **Filtro de Estabilidad Física:** Implementa un umbral de seguridad (dist < 0.2). Si el robot sufre un salto brusco o "glitch" en la simulación mayor a 20 cm en un solo ciclo, la telemetría ignora ese dato para no falsear la distancia total recorrida.
+
+```bash
+def odom_callback(self, msg):
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        q = msg.pose.pose.orientation
+        yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+        self.current_pose = [x, y, yaw]
+
+        # Calcular distancia solo si el robot se está moviendo hacia una ruta
+        if self.is_active and self.last_odom_pos is not None:
+            dist = math.sqrt((x - self.last_odom_pos[0])**2 + (y - self.last_odom_pos[1])**2)
+            if dist < 0.2: # Filtrar saltos bruscos por ruido
+                self.total_distance += dist
+        
+        self.last_odom_pos = [x, y]
+```
+
+## 5. Seguimiento de trayectoria PID
+- **Cálculo de Errores:** Determina la distancia euclidiana y el ángulo hacia el waypoint actual, normalizando el error angular mediante `atan2` para asegurar que el robot siempre gire por el camino más corto (rango de [−π,π]).
+
+- **Gestión Dinámica de Waypoints:** Implementa una lógica de "mirada hacia adelante" (look-ahead) usando umbrales distintos: un margen amplio (0.35m) para fluir entre puntos intermedios y uno estricto (0.15m) para garantizar la precisión al llegar a la meta final.
+
+- **PID Angular con Anti-Windup:** Calcula la velocidad de giro combinando la respuesta proporcional, integral y derivativa. Incluye un clipping (recorte) en el término integral para evitar que el error acumulado cause giros violentos tras una obstrucción.
+
+- **Atenuación de Velocidad por Giro:** Ajusta el objetivo de velocidad lineal según el error de orientación mediante una función de coseno al cuadrado; esto obliga al robot a frenar automáticamente en curvas cerradas para mantener la estabilidad.
+
+- **Rampa de Aceleración:** Compara la velocidad actual con la deseada y aplica un incremento gradual (`accel_limit`). Esto elimina los tirones bruscos de los motores, protegiendo el factor de tiempo real (RTF) de la simulación.
+
+- **Condición de Meta:** Monitorea si se ha alcanzado el último punto de la lista de Dijkstra para desactivar el nodo, poner los motores a cero y ejecutar la impresión del resumen final de la misión.
+
+```bash
+def control_loop(self):
+        if not self.path or self.current_pose is None or not self.is_active:
+            return
+
+        curr_x, curr_y, curr_yaw = self.current_pose
+        target = self.path[self.target_idx]
+
+        # 1. Cálculos de Error
+        dist_to_target = math.sqrt((target[0] - curr_x)**2 + (target[1] - curr_y)**2)
+        desired_yaw = math.atan2(target[1] - curr_y, target[0] - curr_x)
+        error_w = math.atan2(math.sin(desired_yaw - curr_yaw), math.cos(desired_yaw - curr_yaw))
+
+        # 2. Lógica de Waypoints
+        threshold = 0.35 if self.target_idx < len(self.path) - 1 else 0.15
+        if dist_to_target < threshold and self.target_idx < len(self.path) - 1:
+            self.target_idx += 1
+            return
+
+        # 3. PID Angular
+        self.integral_w = np.clip(self.integral_w + error_w * 0.05, -0.3, 0.3)
+        derivative_w = (error_w - self.prev_error_w) / 0.05
+        w_cmd = np.clip((self.kp_w * error_w) + (self.ki_w * self.integral_w) + (self.kd_w * derivative_w), -self.max_w, self.max_w)
+        self.prev_error_w = error_w
+
+        # 4. Velocidad con Rampa y Suavizado
+        v_target = self.v_nominal * (math.cos(np.clip(error_w, -1.5, 1.5))**2)
+        if self.current_v < v_target:
+            self.current_v = min(self.current_v + self.accel_limit, v_target)
+        else:
+            self.current_v = max(self.current_v - self.accel_limit, v_target)
+
+        # 5. Publicación y Meta
+        cmd = Twist()
+        if self.target_idx >= len(self.path) - 1 and dist_to_target < 0.15:
+            cmd.linear.x, cmd.angular.z = 0.0, 0.0
+            self.is_active = False
+            self.imprimir_resumen_final()
+        else:
+            cmd.linear.x, cmd.angular.z = self.current_v, w_cmd
+            self.gestionar_telemetria()
+            
+        self.cmd_pub.publish(cmd)
+```
+
+## 6. Monitorización y Reporte de Resultados
+- **Control de Frecuencia de Salida:** Implementa un limitador mediante el operador módulo (% 10) para imprimir datos solo cada 0.5 segundos.
+
+- **Feedback de Navegación en Tiempo Real:** Calcula el tiempo transcurrido desde el inicio de la ruta y muestra simultáneamente la distancia acumulada, la velocidad actual y el progreso de los waypoints.
+
+- **Cálculo de Métricas de Desempeño:** Al detectar el fin de la trayectoria, computa el tiempo total de operación y la velocidad media real.
+
+- **Reporte Final de Misión:** Genera un resumen visual estructurado en la terminal mediante get_logger().info, lo que garantiza que los resultados de distancia y tiempo aparezcan de forma inmediata incluso al ejecutar desde un archivo launch.
+
+
+```bash
+def gestionar_telemetria(self):
+        """ Imprime progreso cada 0.5 segundos para evitar saturar la terminal """
+        self.telemetry_tick += 1
+        if self.telemetry_tick % 10 == 0: # Cada 10 ciclos (a 20Hz = 0.5s)
+            tiempo_actual = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
+            self.get_logger().info(
+                f"-> Dist: {self.total_distance:5.2f}m | "
+                f"Meta: {self.target_idx+1}/{len(self.path)} | "
+                f"V: {self.current_v:.2f}m/s | "
+                f"T: {tiempo_actual:.1f}s"
+            )
+
+    def imprimir_resumen_final(self):
+        """ Resumen detallado al llegar a la meta """
+        tiempo_total = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
+        vel_media = self.total_distance / tiempo_total if tiempo_total > 0 else 0.0
+        
+        # Loggers para que aparezcan inmediatamente en la terminal del launch
+        self.get_logger().info("=============================================")
+        self.get_logger().info("     🏁 ¡META FINAL ALCANZADA! 🏁")
+        self.get_logger().info("=============================================")
+        self.get_logger().info(f" Distancia Total : {self.total_distance:.2f} metros")
+        self.get_logger().info(f" Tiempo Total    : {tiempo_total:.2f} segundos")
+        self.get_logger().info(f" Velocidad Media : {vel_media:.2f} m/s")
+        self.get_logger().info("=============================================")
+```
+
+
+
+# Compilacion y ejecucion de la simulacion 
+
+### 1. Lanza el entorno en Gazebo (Terminal1)
+```bash
+cd ~/go2_delgado
+colcon build
+source install/setup.bash
+ros2 launch go2_config gazebo_velodyne.launch.py world:=small_house
+```
+### 2. Abrir el mapa en rviz + dijkstra + PID (Terminal 2):
+En el archivo launch ya se incluye la ejecucion del Dijkstra y el PID.
+
+```bash
+ros2 launch go2_planner planner.launch.py
+```
+![go2_rviz](img/go2_rviz.png)
+
+### 3. Generacion de trayectoria y control PID
+EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de clic en cualquier lugar del mapa para que se genere automaticamente una trayectoria y el robot comenzara a seguirla.
+
+![Generacion de trayectoria](img/Trayectoria.png)
+
+# Video de Youtube
+
+- video youtube: [https://youtu.be/IdI1W1w757w?si=uEkZgezxuImxjMoD](https://youtu.be/IdI1W1w757w?si=uEkZgezxuImxjMoD)
+
+
+# Descripción de Launch Files
+
+- **planner.launch.py:** Gestiona el ciclo de vida del mapa, la transformación estática map->odom , el nodo de planificación Dijkstra y nodo de control PID
+
+```bash
+import os
+from launch import LaunchDescription
+from ament_index_python.packages import get_package_share_directory
+from launch_ros.actions import Node
+
+def generate_launch_description():
+    # 1. Rutas
+    pkg_share = get_package_share_directory('go2_planner')
+    rviz_config_path = os.path.join(pkg_share, 'rviz', 'planner.rviz')
+    map_file = os.path.join(pkg_share, 'maps', 'map.yaml')
+    
+    return LaunchDescription([
+        # Nodo 1: Map Server
+        Node(
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
+            output='screen',
+            parameters=[{'use_sim_time': True}, {'yaml_filename': map_file}]
+        ),
+
+        # Nodo 2: Lifecycle Manager
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_planner',
+            output='screen',
+            parameters=[{'use_sim_time': True}, {'autostart': True}, {'node_names': ['map_server']}]
+        ),
+
+        # Nodo 3: Transformación Estática (Map -> Odom)
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='map_to_odom_bridge',
+            arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+            parameters=[{'use_sim_time': True}]
+        ),
+
+        # Nodo 4: Planificador Global (Dijkstra)
+        Node(
+            package='go2_planner',
+            executable='planner_node',
+            name='planner_node',
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        ),
+
+        # Nodo 5: Controlador Local (PID)
+        Node(
+            package='go2_planner',
+            executable='pid_controller',
+            name='pid_controller_node',
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        ),
+        
+        # Nodo 6: RViz2
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            arguments=['-d', rviz_config_path],
+            parameters=[{'use_sim_time': True}],
+            output='screen'
+        )
+    ])
+```
 
 - **gazebo_velodyne.launch.py:** Configura la física en Gazebo, los sensores LiDAR y la cinemática de CHAMP para el Unitree Go2. 
 
@@ -528,77 +866,17 @@ def generate_launch_description():
     )
 ```
 
-- **planner.launch.py:** Gestiona el ciclo de vida del mapa, la transformación estática map->odom y el nodo de planificación Dijkstra.
 
-```bash
-import os
-from launch import LaunchDescription
-from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node
 
-def generate_launch_description():
-    # 1. Ruta del mapa
-    map_file = os.path.expanduser('~/map.yaml')
-    
-    # 2. Ruta de la configuración de RViz
-    pkg_share = get_package_share_directory('go2_planner')
-    rviz_config_path = os.path.join(pkg_share, 'rviz', 'planner.rviz')
-    map_file = os.path.join(get_package_share_directory('go2_planner'), 'maps', 'map.yaml')
-    
-    return LaunchDescription([
-        # Nodo 1: Map Server
-        Node(
-            package='nav2_map_server',
-            executable='map_server',
-            name='map_server',
-            output='screen',
-            parameters=[{'use_sim_time': True}, 
-                        {'yaml_filename': map_file}]
-        ),
 
-        # Nodo 2: Lifecycle Manager
-        Node(
-            package='nav2_lifecycle_manager',
-            executable='lifecycle_manager',
-            name='lifecycle_manager_planner',
-            output='screen',
-            parameters=[{'use_sim_time': True},
-                        {'autostart': True},
-                        {'node_names': ['map_server']}]
-        ),
 
-        # Nodo 3: Transformación Estática 
-        # Esto conecta el mapa con el robot 
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='map_to_odom_bridge',
-            arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-            parameters=[{'use_sim_time': True}]
-        ),
 
-        # Nodo 4: Nodo Dijkstra
-        Node(
-            package='go2_planner',
-            executable='planner_node',
-            name='planner_node',
-            output='screen',
-            parameters=[{'use_sim_time': True}]
-        ),
-        
-        # Nodo 5: RViz2 
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', rviz_config_path],
-            parameters=[{'use_sim_time': True}],
-            output='screen'
-        )
-    ])
-```
 
-# 7. Video de youtube
-[https://www.youtube.com/watch?v=PY8p1WlFl1I ](https://www.youtube.com/watch?v=PY8p1WlFl1I )
+
+
+
+
+
+
 
 

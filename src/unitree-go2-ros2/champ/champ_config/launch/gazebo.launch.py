@@ -91,6 +91,7 @@ def generate_launch_description():
             "hardware_connected": "false",
             "publish_foot_contacts": "false",
             "close_loop_odom": "true",
+            #"true",
         }.items(),
     )
 

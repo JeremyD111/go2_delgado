@@ -206,7 +206,7 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan
+        observation_sources: scan base_scan
         #scan base_scan
         scan:
           topic: /scan
@@ -277,7 +277,7 @@ global_costmap:
       voxel2d_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan
+        observation_sources: scan 
         #scan base_scan
         scan:
           topic: /scan

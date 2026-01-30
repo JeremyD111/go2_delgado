@@ -1,5 +1,6 @@
-#! /usr/bin/env python
 '''
+#! /usr/bin/env python
+#
 Copyright (c) 2019-2020, Juan Miguel Jimeno
 All rights reserved.
 
@@ -24,7 +25,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+#
 
 import rospy
 from nav_msgs.msg import Odometry
@@ -61,3 +62,64 @@ if __name__ == "__main__":
     rospy.init_node("champ_gazebo_odometry_transform", anonymous = True)
     odom = Odom()
     rospy.spin()
+'''
+
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import TransformStamped
+from tf2_ros import TransformBroadcaster
+
+class OdomTFPublisher(Node):
+    def __init__(self):
+        super().__init__('champ_gazebo_odometry_transform')
+
+        # Asegúrate de usar el tema correcto: odom/ground_truth
+        self.subscription = self.create_subscription(
+            Odometry,
+            'odom/ground_truth',
+            self.odometry_callback,
+            10
+        )
+        
+        # Broadcaster para TF en ROS 2
+        self.tf_broadcaster = TransformBroadcaster(self)
+
+    def odometry_callback(self, msg):
+        # Crear el mensaje de Transformación
+        t = TransformStamped()
+
+        # CAMBIO CRÍTICO:
+        # En lugar de usar self.get_clock().now(), usamos msg.header.stamp
+        # Esto sincroniza perfectamente el TF con los datos de Gazebo.
+        t.header.stamp = msg.header.stamp 
+        
+        t.header.frame_id = "odom"
+        t.child_frame_id = "base_footprint"
+
+        # Traducción
+        t.transform.translation.x = msg.pose.pose.position.x
+        t.transform.translation.y = msg.pose.pose.position.y
+        t.transform.translation.z = 0.0
+
+        # Rotación
+        t.transform.rotation = msg.pose.pose.orientation
+
+        # Publicar la transformación
+        self.tf_broadcaster.sendTransform(t)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = OdomTFPublisher()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

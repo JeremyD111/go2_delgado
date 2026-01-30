@@ -27,7 +27,7 @@ def launch_setup(context, *args, **kwargs):
         },
         "small_house": {
             "path": os.path.join(config_pkg_share, "worlds/small_house/small_house.world"),
-            "x": "1.0", "y": "2.0", "z": "0.6"
+            "x": "1.0", "y": "2.0", "z": "0.4"
             #"0.3" # Coordenadas personalizadas
         },
         "office": {
@@ -82,6 +82,7 @@ def launch_setup(context, *args, **kwargs):
             "hardware_connected": "false",
             "publish_foot_contacts": "false",
             "close_loop_odom": "true",
+            #"true",
         }.items(),
     )
 

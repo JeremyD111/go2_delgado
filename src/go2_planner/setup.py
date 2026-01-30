@@ -33,7 +33,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'planner_node = go2_planner.planner_node:main'
+            'planner_node = go2_planner.planner_node:main',
+            'pid_controller = go2_planner.pid_controller_node:main',
             
         ],
     },

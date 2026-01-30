@@ -5,15 +5,18 @@
       <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
         <ros>
             <remapping>odom:=odom/ground_truth</remapping>
+            <!--remapping>odom:=odom/ground_truth</remapping-->
         </ros>
 
         <body_name>base_link</body_name>
         <frame_name>world</frame_name>
-        <update_rate>50.0</update_rate>
+        <!--frame_name>world</frame_name-->
+        <update_rate>10.0</update_rate>
         <!--update_rate>10.0</update_rate-->
         <xyz_offset>0 0 0</xyz_offset>
         <rpy_offset>0 0 0</rpy_offset>
         <gaussian_noise>0.01</gaussian_noise>
+        <!--gaussian_noise>0.01</gaussian_noise-->
     </plugin>
     </gazebo>
 
@@ -84,11 +87,11 @@
     </gazebo> -->
 
     <gazebo reference="trunk">
-        <mu1>0.5</mu1>
+        <mu1>0.2</mu1>
         <!--mu1>0.2</mu1-->
-        <mu2>0.5</mu2>
+        <mu2>0.2</mu2>
         <!--mu2>0.2</mu2-->
-        <kp>1000000.0</kp>
+        <kp>10000.0</kp>
         <!--kp>10000.0</kp-->
         <kd>1.0</kd>
     </gazebo>
@@ -122,14 +125,15 @@
         <self_collide>1</self_collide>
     </gazebo>
     <gazebo reference="lf_foot_link">
-        <mu1>1.5</mu1>
+        <mu1>0.6</mu1>
         <!--mu1>0.6</mu1-->
-        <mu2>1.5</mu2>
+        <mu2>0.6</mu2>
         <!--mu2>0.6</mu2-->
         <self_collide>1</self_collide>
-        <kp>1000000.0</kp>
+        <kp>10000.0</kp>
         <!--kp>10000.0</kp-->
         <kd>1.0</kd>
+        <!--kd>1.0</kd-->
     </gazebo>
 
     <!-- FR leg -->
@@ -141,7 +145,7 @@
         <mu1>0.2</mu1>
         <mu2>0.2</mu2>
         <self_collide>1</self_collide>
-        <kp>10000.0</kp>
+        <kp>20000.0</kp>
         <kd>1.0</kd>
     </gazebo>
     <gazebo reference="rf_lower_leg_link">
@@ -150,14 +154,15 @@
         <self_collide>1</self_collide>
     </gazebo>
     <gazebo reference="rf_foot_link">
-        <mu1>1.5</mu1>
+        <mu1>0.6</mu1>
         <!--mu1>0.6</mu1-->
-        <mu2>1.5</mu2>
+        <mu2>0.6</mu2>
         <!--mu2>0.6</mu2-->
         <self_collide>1</self_collide>
-        <kp>1000000.0</kp>
+        <kp>10000.0</kp>
         <!--kp>10000.0</kp-->
         <kd>1.0</kd>
+        <!--kd>1.0</kd-->
     </gazebo>
 
     <!-- RL leg -->
@@ -178,14 +183,15 @@
         <self_collide>1</self_collide>
     </gazebo>
     <gazebo reference="lh_foot_link">
-        <mu1>1.5</mu1>
+        <mu1>0.6</mu1>
         <!--mu1>0.6</mu1-->
-        <mu2>1.5</mu2>
+        <mu2>0.6</mu2>
         <!--mu2>0.6</mu2-->
         <self_collide>1</self_collide>
-        <kp>1000000.0</kp>
+        <kp>10000.0</kp>
         <!--kp>10000.0</kp-->
         <kd>1.0</kd>
+        <!--kd>1.0</kd-->
     </gazebo>
 
     <!-- RR leg -->
@@ -206,14 +212,15 @@
         <self_collide>1</self_collide>
     </gazebo>
     <gazebo reference="rh_foot_link">
-        <mu1>1.5</mu1>
+        <mu1>0.6</mu1>
         <!--mu1>0.6</mu1-->
-        <mu2>1.5</mu2>
+        <mu2>0.6</mu2>
         <!--mu2>0.6</mu2-->
         <self_collide>1</self_collide>
-        <kp>1000000.0</kp>
+        <kp>10000.0</kp>
         <!--kp>10000.0</kp-->
         <kd>1.0</kd>
+        <!--kd>1.0</kd-->
     </gazebo>
 
 </robot>
