@@ -627,7 +627,7 @@ def gestionar_telemetria(self):
 
 
 
-# Compilacion y ejecucion de la simulacion 
+# Compilacion y ejecucion de la simulacion Gazebo + Rviz (Dijkstra + PID)
 
 ### 1. Lanza el entorno en Gazebo (Terminal1)
 ```bash
