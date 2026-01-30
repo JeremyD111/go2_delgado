@@ -649,6 +649,11 @@ EN el Rviz, pulse el botón "2D Goal Pose" ubicado en la parte superior y de cli
 
 ![Generacion de trayectoria](img/Trayectoria.png)
 
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/40b079ca-63fe-4cce-91b2-c15fd6a2eded" width="600px" controls></video>
+  <p><i>Video 2: Ejecución del seguidor de trayectoria PID (Prueba de 15 metros)</i></p>
+</div>
+
 # Video de Youtube
 
 - video youtube: [https://youtu.be/IdI1W1w757w?si=uEkZgezxuImxjMoD](https://youtu.be/IdI1W1w757w?si=uEkZgezxuImxjMoD)
