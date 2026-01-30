@@ -59,7 +59,7 @@ colcon build
 source install/setup.bash
 ```
 ## Ejecutar simulacion final:
-Una vez realizado los pasos anteriores puede saltarse a la parte 2 del proyecto para ejecutar la simulacion final que ya incluye DIJKSTRA Y PID [Ir a Parte#2](#compilacion-y-ejecucion-de-la-simulacion)
+Una vez realizado los pasos anteriores puede saltarse a la parte 2 del proyecto para ejecutar la simulacion final que ya incluye DIJKSTRA Y PID [Ir a Parte#2](#compilacion-y-ejecucion-de-la-simulacion-gazebo--rviz-dijkstra--pid)
 
 
 
